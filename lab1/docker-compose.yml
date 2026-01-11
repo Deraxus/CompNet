@@ -1,0 +1,64 @@
+services:
+  pg-master:
+    container_name: pg-master
+    image: localhost/postres:patroni
+    build: .
+    restart: always
+    ports:
+      - '5433:5432'
+    expose:
+      - 8008
+    volumes:
+      - pg-master:/var/lib/postgresql/data
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    command: patroni /postgres0.yml
+    hostname: pg-master
+
+  pg-slave:
+    container_name: pg-slave
+    image: localhost/postres:patroni
+    build: .
+    restart: always
+    ports:
+      - '5434:5432'
+    expose:
+      - 8008
+    volumes:
+      - pg-slave:/var/lib/postgresql/data
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    command: patroni /postgres1.yml
+    hostname: pg-slave
+
+  haproxy:
+    image: haproxy:3.0
+    container_name: postgres_entrypoint # Это будет адрес подключения к БД, можно выбрать любой
+    ports:
+      - 5432:5432 # Это будет порт подключения к БД, можно выбрать любой
+      - 7000:7000
+    depends_on: # Не забываем убедиться, что сначала все корректно поднялось
+      - pg-master
+      - pg-slave
+      - zoo
+    volumes:
+      - ./haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg
+
+  zoo:
+    container_name: zoo
+    image: confluentinc/cp-zookeeper:7.7.1
+    restart: always
+    ports:
+      - '2181:2181'
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    hostname: zoo
+
+volumes:
+  pg-master: null
+  pg-slave: null

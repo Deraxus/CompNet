@@ -1,0 +1,37 @@
+---
+- name: Task 1 — Create, check, modify, then delete a file
+  hosts: my_servers
+  connection: local
+  gather_facts: true
+  
+  vars:
+    test_file_path: "{{ ansible_env.HOME }}/test.txt"
+    initial_content: "test_file_content"
+    updated_content: "new_content_before_delete"
+  
+  tasks:
+    - name: Step 1 — Create file with initial content
+      copy:
+        dest: "{{ test_file_path }}"
+        content: "{{ initial_content }}\n"
+        mode: "0644"
+    
+    - name: Step 2 — Check that the file exists
+      stat:
+        path: "{{ test_file_path }}"
+      register: test_file_stat
+    
+    - name: Step 2 — Print check result
+      debug:
+        msg: "File exists={{ test_file_stat.stat.exists }}, size={{ test_file_stat.stat.size | default('n/a') }} bytes"
+    
+    - name: Step 3 — Change file content before deletion
+      copy:
+        dest: "{{ test_file_path }}"
+        content: "{{ updated_content }}\n"
+        mode: "0644"
+    
+    - name: Step 4 — Delete file
+      file:
+        path: "{{ test_file_path }}"
+        state: absent

@@ -1,0 +1,17 @@
+:80 {
+    root * {{ web_root }}
+    file_server
+    
+    header {
+        X-Custom-Header "Ansible Caddy Lab"
+        X-Frame-Options "DENY"
+        X-Content-Type-Options "nosniff"
+        Server "Caddy via Ansible on Alpine"
+    }
+    
+    log {
+        output file {{ log.file }}
+        format json
+        level {{ log.level }}
+    }
+}
